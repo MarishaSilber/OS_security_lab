@@ -57,7 +57,6 @@ mv ~/fruits/pineaple ~/fruits/pineapple
 exit
 ln ~/.bash_history ~/bash_history_hardlink
 ls -l ~/bash_history_hardlink
-stat -c '%h' ~/bash_history_hardlink
 #2.2.16
 rm -r ~/fruits
 #2.2.17
