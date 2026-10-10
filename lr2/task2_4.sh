@@ -7,8 +7,8 @@ count=0
 echo "files:"
 while IFS= read -r f; do
 	echo "$f"
-	bytes=$((bytes + &(wc -c < "$f")))
-	lines=$((lines + &(wc -l < "$f")))
+	bytes=$((bytes + $(wc -c < "$f")))
+	lines=$((lines + $(wc -l < "$f")))
 	count=$((count + 1))
 done < <(find "$HOME" -type f -name "*.txt")
 
