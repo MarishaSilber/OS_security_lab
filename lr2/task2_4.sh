@@ -16,4 +16,3 @@ echo "count files: $count"
 echo "count bytes: $bytes"
 echo "count lines: $lines"
 
-
