@@ -287,3 +287,122 @@ su - testuser
 id
 sudo id #sudo: I'm sorry testuser. I'm afraid I can't do that
 exit
+
+# 2.2.33
+man login.defs
+sudo useradd -D
+man groupadd
+
+# 2.2.34
+grep -E '^UID_(MIN|MAX)' /etc/login.defs
+sudo sed -i -E 's/^#?UID_MIN[[:space:]]+.*/UID_MIN 5000/' /etc/login.defs
+grep -E '^UID_MIN[[:space:]]' /etc/login.defs
+sudo useradd -m configuser1 #id configuser1 #uid=5000(configuser1) gid=5000(configuser1) groups=5000(configuser1)
+getent passwd configuser1
+sudo cp -a /etc/login.defs.orig /etc/login.defs
+grep '^UID_MIN' /etc/login.defs
+
+# 2.2.35
+sudo sed -i -E 's/^#?SYS_UID_MIN[[:space:]]+.*/SYS_UID_MIN 700/' /etc/login.defs
+grep -E '^SYS_UID_MIN[[:space:]]' /etc/login.defs
+sudo sed -i -E 's/^#?SYS_UID_MAX[[:space:]]+.*/SYS_UID_MAX 710/' /etc/login.defs
+sudo sed -i -E 's/^#?SYS_UID_MAX[[:space:]]+.*/SYS_UID_MIN 700/' /etc/login.defs
+grep -E '^SYS_UID_MAX[[:space:]]' /etc/login.defs
+sudo useradd -r sysconfig1
+sudo useradd -r sysconfig2
+sudo useradd -r sysconfig3
+id sysconfig1 sysconfig2 sysconfig3
+sudo userdel sysconfig1; sudo userdel sysconfig2; sudo userdel sysconfig3
+sudo cp -a /etc/login.defs.orig /etc/login.defs
+#uid=710(sysconfig1) gid=710(sysconfig1) groups=710(sysconfig1)
+#uid=709(sysconfig2) gid=709(sysconfig2) groups=709(sysconfig2)
+#uid=708(sysconfig3) gid=708(sysconfig3) groups=708(sysconfig3)
+
+# 2.2.36
+sudo sed -i -E 's/^#?GID_MIN[[:space:]]+.*/GID_MIN 6000/' /etc/login.defs
+grep -E '^GID_MIN[[:space:]]' /etc/login.defs
+sudo groupadd configgroup1
+getent group configgroup1 # GID 6000
+sudo groupdel configgroup1
+sudo cp -a /etc/login.defs.orig /etc/login.defs
+
+# 2.2.37
+sudo sed -i -E 's/^#?SYS_GID_MIN[[:space:]]+.*/SYS_GID_MIN 700/' /etc/login.defs
+grep -E '^SYS_GID_MIN[[:space:]]' /etc/login.defs
+sudo sed -i -E 's/^#?SYS_GID_MAX[[:space:]]+.*/SYS_GID_MAX 710/' /etc/login.defs
+grep -E '^SYS_GID_MAX[[:space:]]' /etc/login.defs
+sudo groupadd -r sysgroup1
+sudo groupadd -r sysgroup2
+sudo groupadd -r sysgroup3
+getent group sysgroup1 sysgroup2 sysgroup3     # 710, 709, 708
+sudo groupdel sysgroup1; sudo groupdel sysgroup2; sudo groupdel sysgroup3
+sudo cp -a /etc/login.defs.orig /etc/login.defs
+
+# 2.2.38
+grep -E 'CREATE_HOME' /etc/login.defs
+grep -qE '^CREATE_HOME[[:space:]]' /etc/login.defs || echo 'CREATE_HOME yes' | sudo tee -a /etc
+/login.defs
+grep -E '^CREATE_HOME[[:space:]]' /etc/login.defs
+sudo useradd homeuser1
+ls -ld /home/homeuser1
+sudo sed -i -E 's/^#?CREATE_HOME[[:space:]]+.*/CREATE_HOME no/' /etc/login.defs
+grep -E '^CREATE_HOME[[:space:]]' /etc/login.defs
+sudo useradd homeuser2
+ls -ld /home/homeuser2
+sudo userdel -r homeuser1
+sudo userdel homeuser2
+sudo cp -a /etc/login.defs.orig /etc/login.defs
+
+# 2.2.39
+grep -qE '^#?CREATE_HOME[[:space:]]' /etc/login.defs 
+echo 'CREATE_HOME yes' | sudo tee -a /etc/login.defs
+grep -E '^CREATE_HOME[[:space:]]' /etc/login.defs
+sudo useradd -r syshome1 #ls: cannot access '/home/syshome1': No such file or directory
+sudo useradd -r -m syshome2
+ls -ld /home/syshome2
+sudo userdel syshome1
+sudo userdel -r syshome2
+sudo cp -a /etc/login.defs.orig /etc/login.defs
+#CREATE_HOME не распространяется на системных пользователей -r: в документации useradd сказано, что для них каталог не создаётся независимо от этой настройки, нужно явное -m
+
+# 2.2.40
+grep -E '^(UMASK|HOME_MODE)' /etc/login.defs
+umask
+sudo useradd -m umaskuser1
+stat -c '%a %n' /home/umaskuser1 # это 750
+sudo sed -i -E 's/^#?HOME_MODE[[:space:]]+.*/HOME_MODE 0700/' /etc/login.defs 
+grep -E '^HOME_MODE[[:space:]]' /etc/login.defs
+sudo useradd -m umaskuser2
+stat -c '%a %n' /home/umaskuser2 # это 700
+sudo userdel -r umaskuser1
+sudo userdel -r umaskuser2
+sudo cp -a /etc/login.defs.orig /etc/login.defs
+
+# 2.2.41
+grep -E '^USERGROUPS_ENAB' /etc/login.defs
+sudo useradd -m ugenab1
+id ugenab1
+sudo sed -i -E 's/^#?USERGROUPS_ENAB[[:space:]]+.*/USERGROUPS_ENAB no/' /etc/login.defs
+grep -E '^USERGROUPS_ENAB[[:space:]]' /etc/login.defs
+sudo useradd -m ugenab2
+id ugenab2 #uid=1005(ugenab2) gid=100(users) groups=100(users)
+getent group ugenab2 #пусто 
+sudo userdel -r ugenab1
+sudo userdel -r ugenab2
+sudo cp -a /etc/login.defs.orig /etc/login.defs
+
+#2.2.42
+sudo useradd -D | grep SHELL #SHELL=/bin/sh
+sudo useradd -D -s /bin/bash
+sudo useradd -D | grep SHELL #SHELL=/bin/bash
+sudo useradd -m defaultuser1
+getent passwd defaultuser1 #defaultuser1:x:1004:1008::/home/defaultuser1:/bin/bash
+
+# 2.2.43
+sudo mkdir -p /srv/home
+sudo useradd -D -b /srv/home 
+sudo useradd -D | grep HOME
+sudo useradd -m defaultuser2
+getent passwd defaultuser2 #defaultuser2:x:1005:1009::/srv/home/defaultuser2:/bin/bash
+
+
